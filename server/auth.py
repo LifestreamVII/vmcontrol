@@ -139,7 +139,7 @@ def wol():
     wol_task = wake_on_lan_task.apply_async(args=[mac])
     time.sleep(8)
     ping_task = ping_task.apply_async(args=[target])
-    return jsonify(message="WoL and Ping tasks started", statusUrlWOL=url_for('taskstatus', intask=wake_on_lan_task, task_id=wol_task.id)), statusUrlPing=url_for('taskstatus', intask=ping_task, task_id=ping_task.id), 202
+    return jsonify(message="WoL and Ping tasks started", statusUrlWOL=url_for('taskstatus', intask=wake_on_lan_task, task_id=wol_task.id), statusUrlPing=url_for('taskstatus', intask=ping_task, task_id=ping_task.id)), 202
 
 @celery.task(bind=True)
 def wake_on_lan_task(self, mac):
@@ -164,7 +164,7 @@ def ping_task(self, target):
         self.update_state(state='PROGRESS', meta={'current': i, 'total': max_retries})
         response_time = ping(target_host, timeout=timeout)
         if response_time is not None:
-            print("Ping successful after attempt" + attempt + " response time: " + response_time:.3f + " ms")
+            print("Ping successful after attempt" + attempt + " response time: " + response_time + " ms")
             self.update_state(state='FINISHED')
             return True
         time.sleep(retry_interval)
