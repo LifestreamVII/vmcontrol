@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  redis:
+    restart: always
+    image: "redis"
+    container_name: 'vmcontrol-redis'
+    hostname: redis
+    ports:
+      - "4060:6379"
+    networks:
+      - vmcontrol
+
+  front:
+    restart: always
+    container_name: 'vmcontrol-front'
+    depends_on:
+      - vmcontrol
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    ports:
+      - 6020:3000
+    volumes:
+      - ./front:/app/front
+    #command: npm run start
+    hostname: frontvm
+    networks:
+      - vmcontrol
+
+  vmcontrol:
+    restart: always
+    container_name: 'vmcontrol-api'
+    depends_on:
+      - redis
+    build:
+      context: .
+      dockerfile: Dockerfile
+    dns:
+      - 8.8.8.8
+    volumes:
+      - ./tmp:/tmp
+      - ./server:/usr/src/app
+    entrypoint: /usr/src/app/init.sh
+    ports:
+      - 5070:5000
+    hostname: vmcontrol
+    networks:
+      - vmcontrol
+
+networks:
+  vmcontrol:
+     name: vmcontrol-net
+     driver: bridge
+     ipam:
+      config:
+        - subnet: 10.2.0.0/24

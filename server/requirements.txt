@@ -1,0 +1,9 @@
+flask
+flask_jwt_extended
+celery
+flask_cors
+bcrypt
+requests
+wakeonlan
+ping3
+paramiko

@@ -2,7 +2,7 @@ import axios from "axios"
 
 const serverTest = async () => {
 
-    return axios.get("http://localhost:5000/servertest").then((d)=>{
+    return axios.get("http://vmcontrol:5000/servertest").then((d)=>{
         console.log(d.data.message)
         if (d.status == 200){
             return true;

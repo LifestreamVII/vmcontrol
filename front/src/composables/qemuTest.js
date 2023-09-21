@@ -2,7 +2,7 @@ import axios from "axios"
 import localforage from "localforage"
 
 
-const qemuOn = async (vmid, action="ON") => {
+const qemuTest = async () => {
     
     const getToken = async () => {
       try{
@@ -28,11 +28,7 @@ const qemuOn = async (vmid, action="ON") => {
   
     const token = await getToken();
     
-    return axios.post("http://localhost:5000/powerqemu", {
-        data: {
-          vmid: vmid,
-          action: action
-        },
+    return axios.get("http://vmcontrol:5000/checkqemu", {
         headers: { 'Authorization': `Bearer ${token}` }
     }).then((d)=>{
         console.log(d.data.message)
@@ -57,4 +53,4 @@ const qemuOn = async (vmid, action="ON") => {
     
 }
 
-export default qemuOn
+export default qemuTest
