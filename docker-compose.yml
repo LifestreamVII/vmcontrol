@@ -22,8 +22,9 @@ services:
     ports:
       - 6020:3000
     volumes:
-      - ./front:/app/front
-    #command: npm run start
+      - ./front:/app
+      # this will mount the node_modules folder for faster performance
+      - nodemodules:/app/node_modules
     hostname: frontvm
     networks:
       - vmcontrol
@@ -55,3 +56,6 @@ networks:
      ipam:
       config:
         - subnet: 10.2.0.0/24
+
+volumes:
+  nodemodules:
