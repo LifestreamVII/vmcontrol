@@ -29,7 +29,7 @@ jwt = JWTManager(app)
 with open('users.json', 'r') as file:
     users_data = json.load(file)
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -42,12 +42,12 @@ def login():
             return jsonify(access_token=access_token), 200
     return jsonify(message="Invalid credentials"), 401
 
-@app.route('/user', methods=['GET'])
+@app.route('/api/user', methods=['GET'])
 @jwt_required()
 def protected():
     return jsonify(message="Access granted"), 200
 
-@app.route('/servertest', methods=['GET'])
+@app.route('/api/servertest', methods=['GET'])
 def servertest():
     try:
         response_time = ping(global_server_ip, timeout=2500)
@@ -60,7 +60,7 @@ def servertest():
     except requests.exceptions.RequestException as e:
         return jsonify(message='Unhandled Error ' + str(e)), 400
 
-@app.route('/checkqemu', methods=['GET'])
+@app.route('/api/checkqemu', methods=['GET'])
 def checkqemu():
     try:
       check_task = check_qemu_status.apply_async(args=[global_server_ip, 'amogus', '/tmp/key'])
@@ -120,7 +120,7 @@ def check_qemu_status(self, server_ip, username, private_key_path):
       raise Ignore()
 
 
-@app.route('/powerqemu', methods=['POST'])
+@app.route('/api/powerqemu', methods=['POST'])
 #@jwt_required()
 def powerqemuatt():
     try:
@@ -133,7 +133,7 @@ def powerqemuatt():
         private_key_path = '/tmp/key'
         mac = global_mac
         target = server_ip
-
+        print(vmid, action, server_ip, username, private_key_path)
         response_time = ping(server_ip, timeout=2500)
 
         if response_time:
@@ -154,7 +154,7 @@ def powerqemuatt():
 def powerqemu(self, vmid, action, server_ip, username, private_key_path):
     ssh_client = paramiko.SSHClient()
     self.update_state(state='PROGRESS', meta={'current': 10, 'status': 'Opening SSH session', 'total': 100})
-
+    exit_code = "Unknown"
     try:
         # Establish an SSH connection
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -192,10 +192,12 @@ def powerqemu(self, vmid, action, server_ip, username, private_key_path):
             raise ValueError()
 
     except Exception as e:
-      self.update_state(state='FAILURE', meta={'status': 'Unhandled Error ' + str(e),
+      print(e)
+      self.update_state(state='FAILURE', meta={'status': str(e),
+                                             'current':100,
+                                             'total':100,
                                              'exc_type': type(e).__name__,
-                                             'exc_message': 'Exited with code '+ str(exit_code) + ' and error : ' + str(error),
-                                             'custom': '...'
+                                             'exc_message': str(e)
                                               })
       raise Ignore()
 
@@ -213,7 +215,6 @@ def wol(mac, target):
       wol_task = wake_on_lan_task.apply_async(args=[mac, broad])
       time.sleep(8)
       pingtask = ping_task.apply_async(args=[target])
-      ping_task.on_failure = on_failure_handler
       return {
             'message': 'WoL and Ping tasks started',
             'statusUrlWOL': url_for('taskstatus', task_id=wol_task.id),
@@ -251,21 +252,17 @@ def ping_task(self, target):
         self.update_state(state='PROGRESS', meta={'current': i, 'total': max_retries, 'status': 'Trying ping....'+str(i)})
         response_time = ping(target_host, timeout=timeout)
         if response_time:
-            print("Ping successful after attempt" + attempt + " response time: " + response_time + " ms")
+            print("Ping successful after attempt" + str(attempt))
             self.update_state(state='SUCCESS',
                 meta={'current': 100, 'status': 'Ping reached server.'})
             return True
         time.sleep(retry_interval)
         i = i+1
     except Exception as e:
-      self.update_state(state='FAILURE', meta={'status': 'Ping failed ! Try again.',
-                                             'exc_type': type(e).__name__,
-                                             'exc_message': 'Ping failed ! Try again.',
-                                             'custom': '...'
-                                              })
+      self.update_state(state='FAILURE', meta={'status': 'Ping failed ! ' + str(e), 'exc_type': type(e).__name__, 'exc_message': 'Ping failed ! ' + str(e), 'current':100, 'total':100})
       raise Ignore()
 
-@app.route('/status/<task_id>')
+@app.route('/api/status/<task_id>')
 def taskstatus(task_id):
     task = celery.AsyncResult(task_id)
     if task.state == 'PENDING':
@@ -285,6 +282,7 @@ def taskstatus(task_id):
             'status': task.info.get('status', '')
         }
     elif task.state != 'FAILURE':
+        print(task)
         response = {
             'state': task.state,
             'current': task.info.get('current', 0),

@@ -1,56 +1,77 @@
-import axios from "axios"
-import localforage from "localforage"
-
+import axios from "axios";
+import localforage from "localforage";
 
 const qemuTest = async () => {
-    
-    const getToken = async () => {
-      try{
-        const res = localforage.getItem('access_token')
-          .then((token) => {
-              if (!token){
-                return null;
-              }
-              else 
-              {
-                return token;
-              }
-            })
-            .catch((error) => {
-              console.error(`Error while getting token : ${error}`);
-            });
-          return res;
-        }
-        catch (e){
-          console.error(e);
-        }
-    }
-  
+  try {
     const token = await getToken();
-    
-    return axios.get("http://vmcontrol:5000/checkqemu", {
-        headers: { 'Authorization': `Bearer ${token}` }
-    }).then((d)=>{
-        console.log(d.data.message)
-        if (d.status == 200 && d.data.status){
-            switch (d.data.status) {
-                case "isON" :
-                    return "isON";
-                    break;
-                case "isOFF" :
-                    return "isOFF";
-                    break;
-                default :
-                    return false;
-                    break;
-            }
-        } else return false;
-    }).catch((e)=>{
-        if (e.response && e.response.data.message) console.error(e.response.data.message);
-        else console.error(e);
-        return false;
-    })
-    
+
+    const { data } = await apiToSpawnTask(token);
+    const taskId = data.statusUrl;
+    const status = await checkTaskStatus(taskId);
+
+    return status;
+  } catch (error) {
+    console.error("Error in qemuTest:", error);
+    throw error;
+  }
 }
 
-export default qemuTest
+async function getToken() {
+  try {
+    const token = await localforage.getItem("access_token");
+    return token || null;
+  } catch (error) {
+    console.error("Error while getting token:", error);
+    throw error;
+  }
+}
+
+async function apiToSpawnTask(token) {
+  try {
+    const response = await axios.get("/api/checkqemu", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data);
+
+    return response;
+  } catch (error) {
+    console.error("Error in apiToSpawnTask:", error);
+    throw error;
+  }
+}
+
+async function checkTaskStatus(url) {
+  try {
+    let status;
+
+    while (true) {
+      const { data } = await axios.get(url);
+	  console.log(data);
+      if (data.state === "SUCCESS") {
+        status = await getCompletedTaskResult(url);
+        break;
+      }
+
+      // Sleep for 5 seconds before checking again
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+
+    return status;
+  } catch (error) {
+    console.error("Error in checkTaskStatus:", error);
+    throw error;
+  }
+}
+
+async function getCompletedTaskResult(url) {
+  try {
+    const { data } = await axios.get(url);
+	console.log(data);
+    return data.status;
+  } catch (error) {
+    console.error("Error in getCompletedTaskResult:", error);
+    throw error;
+  }
+}
+
+export default qemuTest;

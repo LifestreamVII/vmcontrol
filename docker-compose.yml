@@ -42,7 +42,7 @@ services:
     volumes:
       - ./tmp:/tmp
       - ./server:/usr/src/app
-    entrypoint: /usr/src/app/init.sh
+#    entrypoint: /usr/src/app/init.sh
     ports:
       - 5070:5000
     hostname: vmcontrol

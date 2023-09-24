@@ -128,3 +128,4 @@ dist
 .DS_Store
 tmp/key
 front/node_modules
+*.pyc

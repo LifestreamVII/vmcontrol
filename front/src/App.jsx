@@ -1,5 +1,5 @@
 import './App.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios'; // You'll need axios or another HTTP library for API requests
 import localforage from 'localforage';
 import Login from './Login';
@@ -7,10 +7,11 @@ import Home from './Home';
 import PulseLoader from "react-spinners/PulseLoader";
 
 
-function App() {
+const App = () => {
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(true);
-
+  const [QEMU, setQEMU] = useState(false);
+  
   const getToken = async () => {
     try{
       const res = localforage.getItem('access_token')
@@ -35,6 +36,7 @@ function App() {
   }
 
   getToken();
+  
 
   return (
     <div className="App container">
@@ -55,3 +57,4 @@ function App() {
 }
 
 export default App;
+
