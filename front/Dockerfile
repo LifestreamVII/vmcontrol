@@ -1,30 +1,17 @@
 # Base image
-FROM node:14 as builder
+FROM node:18
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package.json ./
+# Copy package.json
+COPY package.json .
 
 # Install dependencies
 RUN npm install
 
-# Copy app files
-COPY . .
+# Expose port
+EXPOSE 3000
 
-# Build the React app
-RUN npm run build
-
-# Production image
-FROM nginx:alpine
-
-# Copy built app from the builder stage
-COPY --from=builder /app/build /usr/share/nginx/html
-COPY default.conf /etc/nginx/conf.d/default.conf
-
-# Copy error_pages to NGINX
-COPY error_pages/. /usr/share/nginx/html/
-
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+# Run app
+CMD npm run start

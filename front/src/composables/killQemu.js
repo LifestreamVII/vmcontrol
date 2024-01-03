@@ -28,7 +28,7 @@ const killQemu = async () => {
   
     const token = await getToken();
     
-    return axios.post("http://vmcontrol:5000/powerqemu", {
+    return axios.post("/api/powerqemu", {
         data: { vmid: "100", action: "stop" },
         headers: { 'Authorization': `Bearer ${token}` }
     }).then((d)=>{

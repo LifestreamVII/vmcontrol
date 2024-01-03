@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   redis:
-    restart: always
+    restart: unless-stopped
     image: "redis"
     container_name: 'vmcontrol-redis'
     hostname: redis
@@ -12,7 +12,7 @@ services:
       - vmcontrol
 
   front:
-    restart: always
+    restart: unless-stopped
     container_name: 'vmcontrol-front'
     depends_on:
       - vmcontrol
@@ -22,14 +22,15 @@ services:
     ports:
       - 6020:3000
     volumes:
-      - ./front:/app/front
-    #command: npm run start
+      - ./front:/app
+      # this will mount the node_modules folder for faster performance
+      - nodemodules:/app/node_modules
     hostname: frontvm
     networks:
       - vmcontrol
 
   vmcontrol:
-    restart: always
+    restart: unless-stopped
     container_name: 'vmcontrol-api'
     depends_on:
       - redis
@@ -41,7 +42,7 @@ services:
     volumes:
       - ./tmp:/tmp
       - ./server:/usr/src/app
-    entrypoint: /usr/src/app/init.sh
+#    entrypoint: /usr/src/app/init.sh
     ports:
       - 5070:5000
     hostname: vmcontrol
@@ -55,3 +56,6 @@ networks:
      ipam:
       config:
         - subnet: 10.2.0.0/24
+
+volumes:
+  nodemodules:

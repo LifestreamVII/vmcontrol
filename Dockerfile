@@ -11,5 +11,7 @@ ADD server/requirements.txt /usr/src/app/requirements.txt
 RUN python3 -m pip install -r /usr/src/app/requirements.txt
 RUN python3 -m pip install redis
 RUN apk add supervisor
+COPY server/init.sh /usr/src/app/init.sh
 WORKDIR /usr/src/app
 EXPOSE 5000
+ENTRYPOINT ["/usr/src/app/init.sh"]
